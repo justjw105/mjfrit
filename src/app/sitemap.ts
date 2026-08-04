@@ -6,7 +6,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const artPieceUrls = artPieces.map((piece) => ({
     url: `${siteUrl}/artpiece/${piece.slug}`,
-    lastModified: new Date(),
+    lastModified: new Date(piece.updatedAt),
   }));
 
   const staticUrls = [
@@ -20,10 +20,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     {
       url: `${siteUrl}/contact`,
-      lastModified: new Date(),
-    },
-    {
-      url: `${siteUrl}/payment`,
       lastModified: new Date(),
     },
   ];
