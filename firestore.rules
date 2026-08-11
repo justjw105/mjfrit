@@ -10,5 +10,15 @@ service cloud.firestore {
       allow write: if request.auth != null
         && request.auth.token.email == 'moriahguy@gmail.com';
     }
+
+    match /blogPosts/{postId} {
+      // Anyone can read posts (the app filters unpublished drafts client-side
+      // in queries, but the rule itself stays permissive for read simplicity).
+      allow read: if true;
+
+      // Only the site's admin account can create/edit/delete posts.
+      allow write: if request.auth != null
+        && request.auth.token.email == 'moriahguy@gmail.com';
+    }
   }
 }

@@ -10,5 +10,14 @@ service firebase.storage {
       allow write: if request.auth != null
         && request.auth.token.email == 'moriahguy@gmail.com';
     }
+
+    match /blog-images/{fileName} {
+      // Anyone can view blog cover photos (public site).
+      allow read: if true;
+
+      // Only the site's admin account can upload/replace/delete photos.
+      allow write: if request.auth != null
+        && request.auth.token.email == 'moriahguy@gmail.com';
+    }
   }
 }

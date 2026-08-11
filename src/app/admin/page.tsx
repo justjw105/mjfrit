@@ -13,7 +13,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { LogOut } from "lucide-react";
 import AdminDashboard from "./AdminDashboard";
+import BlogDashboard from "./BlogDashboard";
 
 export default function AdminPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -55,7 +58,32 @@ export default function AdminPage() {
     );
   }
 
-  return <AdminDashboard user={user} />;
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h1 className="text-3xl font-bold font-headline text-primary">Site Admin</h1>
+          <p className="text-muted-foreground text-sm">Signed in as {user.email}</p>
+        </div>
+        <Button variant="outline" onClick={() => signOut(getFirebaseAuth())}>
+          <LogOut className="mr-2 h-4 w-4" /> Sign Out
+        </Button>
+      </div>
+
+      <Tabs defaultValue="gallery">
+        <TabsList>
+          <TabsTrigger value="gallery">Gallery</TabsTrigger>
+          <TabsTrigger value="blog">Blog</TabsTrigger>
+        </TabsList>
+        <TabsContent value="gallery" className="pt-6">
+          <AdminDashboard user={user} hideHeader />
+        </TabsContent>
+        <TabsContent value="blog" className="pt-6">
+          <BlogDashboard />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
 }
 
 function LoginForm() {
@@ -91,8 +119,8 @@ function LoginForm() {
           <div className="flex justify-center">
             <Image src="/MJFritLogo1.png" alt="MJ Frit" width={56} height={56} />
           </div>
-          <CardTitle className="text-2xl font-headline text-primary">Gallery Admin</CardTitle>
-          <CardDescription>Sign in to manage the gallery.</CardDescription>
+          <CardTitle className="text-2xl font-headline text-primary">Site Admin</CardTitle>
+          <CardDescription>Sign in to manage the gallery and blog.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
