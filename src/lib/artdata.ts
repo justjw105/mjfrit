@@ -13,9 +13,20 @@ export type ArtPiece = {
   alt: string;
   /** ISO date (YYYY-MM-DD) this piece was last updated/added. Used for sitemap lastModified. */
   updatedAt: string;
+  /** Sort position in the gallery grid (lower = earlier). */
+  order: number;
+  /** Whether the piece has been sold. Shown with a "Sold" badge; still visible by default. */
+  sold: boolean;
+  /** Whether the piece appears in the public gallery at all. */
+  visible: boolean;
 };
 
-export const artPieces: ArtPiece[] = [
+/**
+ * One-time seed data used only by the admin page's "Import existing gallery"
+ * action to populate Firestore on first setup. Once imported, Firestore is
+ * the source of truth — this array is not read anywhere else in the app.
+ */
+export const seedArtPieces: ArtPiece[] = [
   {
     id: 1,
     slug: "desert-storm-fused-glass",
@@ -29,7 +40,10 @@ export const artPieces: ArtPiece[] = [
     unframedSize: "18x12 inches",
     price: 2500,
     alt: "Glass art depicting a Southwest American desert landscape featuring St. George Utah's rolling red hills, foreground cacti, and dynamic storm clouds.",
-    updatedAt: "2025-08-21"
+    updatedAt: "2025-08-21",
+    order: 1,
+    sold: false,
+    visible: true
   },
   {
     id: 2,
@@ -44,7 +58,10 @@ export const artPieces: ArtPiece[] = [
     unframedSize: "11x14 inches",
     price: 1700,
     alt: "Handcrafted fused glass fine art depicting the historic Lagangarbh Hut in vibrant autumn colors, nestled in the Scottish Highlands near Glencoe, with Buachaille Etive Mòr mountain partially hidden by dramatic storm clouds. The foreground features the reflective waters of the River Etive, mirroring reeds along the banks, the sky, and the mountain ridges.",
-    updatedAt: "2025-08-21"
+    updatedAt: "2025-08-21",
+    order: 2,
+    sold: false,
+    visible: true
   },
   {
     id: 3,
@@ -59,7 +76,10 @@ export const artPieces: ArtPiece[] = [
     unframedSize: "18x12 inches",
     price: 2500,
     alt: "Handcrafted fused glass artwork of the North American Rocky Mountains featuring evergreen pine forests, golden Quaking Aspens, a rushing river, and early snow on high alpine peaks.",
-    updatedAt: "2025-08-21"
+    updatedAt: "2025-08-21",
+    order: 3,
+    sold: false,
+    visible: true
   },
   {
     id: 4,
@@ -74,7 +94,10 @@ export const artPieces: ArtPiece[] = [
     unframedSize: "18x12 inches",
     price: 2750,
     alt: "Handcrafted fused glass Scottish landscape depicting purple heather-covered hills overlooking Loch Ness near Urquhart Castle under dramatic stormy Highland skies.",
-    updatedAt: "2025-08-21"
+    updatedAt: "2025-08-21",
+    order: 4,
+    sold: false,
+    visible: true
   },
   {
     id: 5,
@@ -89,7 +112,10 @@ export const artPieces: ArtPiece[] = [
     unframedSize: "18x12 inches",
     price: 2750,
     alt: "Handcrafted autumn fused glass landscape depicting a scenic fall woodland trail at Natureland Park near Whitewater Lake, Wisconsin, with vibrant amber and crimson foliage.",
-    updatedAt: "2025-08-23"
+    updatedAt: "2025-08-23",
+    order: 5,
+    sold: false,
+    visible: true
   },
   {
     id: 6,
@@ -104,7 +130,10 @@ export const artPieces: ArtPiece[] = [
     unframedSize: "18x12 inches",
     price: 3000,
     alt: "Handcrafted fine glass art of Mount Rainier at sunset with vibrant purple alpine mists, Pacific Northwest mountain landscape, and evening twilight glow.",
-    updatedAt: "2025-08-23"
+    updatedAt: "2025-08-23",
+    order: 6,
+    sold: false,
+    visible: true
   },
   {
     id: 7,
@@ -119,7 +148,10 @@ export const artPieces: ArtPiece[] = [
     unframedSize: "18x12 inches",
     price: 1500,
     alt: "Handcrafted fused glass artwork depicting New England's White Mountains in peak autumn foliage with fiery fall trees against a multidimensional streaky sky.",
-    updatedAt: "2025-10-31"
+    updatedAt: "2025-10-31",
+    order: 7,
+    sold: false,
+    visible: true
   },
   {
     id: 8,
@@ -134,7 +166,10 @@ export const artPieces: ArtPiece[] = [
     unframedSize: "12x9 inches",
     price: 1000,
     alt: "Handcrafted fused glass woodland artwork depicting a tranquil forest stream and pools reflecting the warm golden hues of sunset at dusk.",
-    updatedAt: "2025-10-31"
+    updatedAt: "2025-10-31",
+    order: 8,
+    sold: false,
+    visible: true
   },
   {
     id: 9,
@@ -149,7 +184,10 @@ export const artPieces: ArtPiece[] = [
     unframedSize: "18x12 inches",
     price: 1700,
     alt: "Handcrafted fine glass artwork depicting snow-capped Mount Fuji in Japan framed by delicate pink springtime cherry blossom Sakura trees.",
-    updatedAt: "2025-10-31"
+    updatedAt: "2025-10-31",
+    order: 9,
+    sold: false,
+    visible: true
   },
   {
     id: 10,
@@ -164,7 +202,9 @@ export const artPieces: ArtPiece[] = [
     unframedSize: "18x12 inches",
     price: 1500,
     alt: "Whimsical handcrafted fused glass artwork of Mount Fuji in springtime with a vivid blue sky and delicate pink cherry blossom boughs.",
-    updatedAt: "2025-09-28"
+    updatedAt: "2025-09-28",
+    order: 10,
+    sold: false,
+    visible: true
   }
-  
 ];
