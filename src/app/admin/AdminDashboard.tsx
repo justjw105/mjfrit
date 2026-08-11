@@ -59,7 +59,7 @@ const BLANK_FORM: ArtPieceInput = {
   visible: true,
 };
 
-export default function AdminDashboard({ user }: { user: User }) {
+export default function AdminDashboard({ user, hideHeader }: { user: User; hideHeader?: boolean }) {
   const [pieces, setPieces] = useState<ArtPieceDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [galleryEmpty, setGalleryEmpty] = useState(false);
@@ -181,17 +181,21 @@ export default function AdminDashboard({ user }: { user: User }) {
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="text-3xl font-bold font-headline text-primary">Gallery Admin</h1>
-          <p className="text-muted-foreground text-sm">Signed in as {user.email}</p>
-        </div>
+        {!hideHeader && (
+          <div>
+            <h1 className="text-3xl font-bold font-headline text-primary">Gallery Admin</h1>
+            <p className="text-muted-foreground text-sm">Signed in as {user.email}</p>
+          </div>
+        )}
         <div className="flex gap-2">
           <Button onClick={openCreateDialog}>
             <Plus className="mr-2 h-4 w-4" /> Add Piece
           </Button>
-          <Button variant="outline" onClick={() => signOut(getFirebaseAuth())}>
-            <LogOut className="mr-2 h-4 w-4" /> Sign Out
-          </Button>
+          {!hideHeader && (
+            <Button variant="outline" onClick={() => signOut(getFirebaseAuth())}>
+              <LogOut className="mr-2 h-4 w-4" /> Sign Out
+            </Button>
+          )}
         </div>
       </div>
 

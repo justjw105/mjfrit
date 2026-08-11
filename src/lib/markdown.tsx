@@ -1,0 +1,132 @@
+import type { ReactNode } from "react";
+import { Fragment } from "react";
+
+/**
+ * A small, dependency-free renderer for the simple Markdown subset the blog
+ * admin editor supports: headings (#, ##, ###), **bold**, *italic*, links
+ * [text](url), unordered lists (- item), and blank-line-separated paragraphs.
+ * Intentionally not a full CommonMark implementation — just enough for
+ * studio-journal-style posts without adding a new dependency to the build.
+ */
+
+function renderInline(text: string, keyPrefix: string): ReactNode[] {
+  const nodes: ReactNode[] = [];
+  // Order matters: links first, then bold, then italic, to avoid ** vs * clashes.
+  const pattern = /\[([^\]]+)\]\(([^)]+)\)|\*\*([^*]+)\*\*|\*([^*]+)\*/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  let i = 0;
+
+  while ((match = pattern.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      nodes.push(text.slice(lastIndex, match.index));
+    }
+    if (match[1] !== undefined) {
+      nodes.push(
+        <a
+          key={`${keyPrefix}-${i++}`}
+          href={match[2]}
+          className="text-accent underline hover:no-underline"
+          target={match[2].startsWith("http") ? "_blank" : undefined}
+          rel={match[2].startsWith("http") ? "noopener noreferrer" : undefined}
+        >
+          {match[1]}
+        </a>
+      );
+    } else if (match[3] !== undefined) {
+      nodes.push(<strong key={`${keyPrefix}-${i++}`}>{match[3]}</strong>);
+    } else if (match[4] !== undefined) {
+      nodes.push(<em key={`${keyPrefix}-${i++}`}>{match[4]}</em>);
+    }
+    lastIndex = match.index + match[0].length;
+  }
+  if (lastIndex < text.length) {
+    nodes.push(text.slice(lastIndex));
+  }
+  return nodes;
+}
+
+export function renderMarkdown(source: string): ReactNode {
+  const lines = source.replace(/\r\n/g, "\n").split("\n");
+  const blocks: ReactNode[] = [];
+  let paragraphBuffer: string[] = [];
+  let listBuffer: string[] = [];
+  let blockIndex = 0;
+
+  function flushParagraph() {
+    if (paragraphBuffer.length > 0) {
+      const text = paragraphBuffer.join(" ");
+      blocks.push(
+        <p key={`p-${blockIndex++}`} className="text-lg leading-relaxed text-foreground/90 mb-6">
+          {renderInline(text, `p-${blockIndex}`)}
+        </p>
+      );
+      paragraphBuffer = [];
+    }
+  }
+
+  function flushList() {
+    if (listBuffer.length > 0) {
+      blocks.push(
+        <ul key={`ul-${blockIndex++}`} className="list-disc pl-6 space-y-2 mb-6 text-lg text-foreground/90">
+          {listBuffer.map((item, idx) => (
+            <li key={idx}>{renderInline(item, `li-${blockIndex}-${idx}`)}</li>
+          ))}
+        </ul>
+      );
+      listBuffer = [];
+    }
+  }
+
+  for (const rawLine of lines) {
+    const line = rawLine.trimEnd();
+
+    if (line.trim() === "") {
+      flushParagraph();
+      flushList();
+      continue;
+    }
+
+    const headingMatch = /^(#{1,3})\s+(.*)$/.exec(line);
+    if (headingMatch) {
+      flushParagraph();
+      flushList();
+      const level = headingMatch[1].length;
+      const content = renderInline(headingMatch[2], `h-${blockIndex}`);
+      if (level === 1) {
+        blocks.push(
+          <h2 key={`h-${blockIndex++}`} className="text-3xl font-bold font-headline text-primary mt-10 mb-4">
+            {content}
+          </h2>
+        );
+      } else if (level === 2) {
+        blocks.push(
+          <h3 key={`h-${blockIndex++}`} className="text-2xl font-bold font-headline text-primary mt-8 mb-3">
+            {content}
+          </h3>
+        );
+      } else {
+        blocks.push(
+          <h4 key={`h-${blockIndex++}`} className="text-xl font-bold font-headline text-primary mt-6 mb-2">
+            {content}
+          </h4>
+        );
+      }
+      continue;
+    }
+
+    const listMatch = /^[-*]\s+(.*)$/.exec(line);
+    if (listMatch) {
+      flushParagraph();
+      listBuffer.push(listMatch[1]);
+      continue;
+    }
+
+    paragraphBuffer.push(line.trim());
+  }
+
+  flushParagraph();
+  flushList();
+
+  return <Fragment>{blocks}</Fragment>;
+}
