@@ -1,19 +1,22 @@
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
-import { artPieces } from '@/lib/artdata';
+import { getArtPieceBySlug } from '@/lib/firestoreArt';
 import type { Metadata } from 'next';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 
 export const dynamicParams = true;
+// Re-fetch from Firestore at most every 5 minutes so admin edits show up
+// quickly without hitting Firestore on every single request.
+export const revalidate = 300;
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const pieceId = slug;
-  const piece = artPieces.find((p) => p.slug === pieceId);
+  const piece = await getArtPieceBySlug(slug);
 
-  if (!piece) {
+  if (!piece || piece.visible === false) {
     notFound();
   }
 
@@ -28,13 +31,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function ArtPiecePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const pieceId = slug;
-  const piece = artPieces.find((p) => p.slug === pieceId);
+  const piece = await getArtPieceBySlug(slug);
 
-  if (!piece) {
-    return (
-      <div>{slug} not found</div>
-    )
+  if (!piece || piece.visible === false) {
+    notFound();
   }
 
   return (
@@ -56,6 +56,11 @@ export default async function ArtPiecePage({ params }: { params: Promise<{ slug:
                 className="object-cover"
                 data-ai-hint={piece.imageHint}
                 />
+                {piece.sold && (
+                    <Badge className="absolute top-4 right-4 bg-primary text-primary-foreground shadow-md">
+                        Sold
+                    </Badge>
+                )}
             </div>
             <div className="space-y-6 pt-4">
                 <div className="space-y-4">
