@@ -1,0 +1,14 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /art-pieces/{fileName} {
+      // Anyone can view gallery photos (public site).
+      allow read: if true;
+
+      // Only the site's admin account can upload/replace/delete photos.
+      allow write: if request.auth != null
+        && request.auth.token.email == 'moriahguy@gmail.com';
+    }
+  }
+}
