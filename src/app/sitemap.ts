@@ -1,8 +1,12 @@
 import { type MetadataRoute } from 'next';
-import { artPieces } from '@/lib/artdata';
+import { getVisibleArtPieceDocs } from '@/lib/firestoreArt';
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export const revalidate = 300;
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteUrl = 'https://mjfrit.com';
+
+  const artPieces = await getVisibleArtPieceDocs();
 
   const artPieceUrls = artPieces.map((piece) => ({
     url: `${siteUrl}/artpiece/${piece.slug}`,
