@@ -1,18 +1,20 @@
 import type { ReactNode } from "react";
 import { Fragment } from "react";
+import Image from "next/image";
 
 /**
  * A small, dependency-free renderer for the simple Markdown subset the blog
  * admin editor supports: headings (#, ##, ###), **bold**, *italic*, links
- * [text](url), unordered lists (- item), and blank-line-separated paragraphs.
- * Intentionally not a full CommonMark implementation — just enough for
- * studio-journal-style posts without adding a new dependency to the build.
+ * [text](url), images ![alt](url), unordered lists (- item), and
+ * blank-line-separated paragraphs. Intentionally not a full CommonMark
+ * implementation — just enough for studio-journal-style posts without
+ * adding a new dependency to the build.
  */
 
 function renderInline(text: string, keyPrefix: string): ReactNode[] {
   const nodes: ReactNode[] = [];
-  // Order matters: links first, then bold, then italic, to avoid ** vs * clashes.
-  const pattern = /\[([^\]]+)\]\(([^)]+)\)|\*\*([^*]+)\*\*|\*([^*]+)\*/g;
+  // Order matters: images before links (both use [..](..)), then bold, then italic.
+  const pattern = /!\[([^\]]*)\]\(([^)]+)\)|\[([^\]]+)\]\(([^)]+)\)|\*\*([^*]+)\*\*|\*([^*]+)\*/g;
   let lastIndex = 0;
   let match: RegExpExecArray | null;
   let i = 0;
@@ -21,22 +23,32 @@ function renderInline(text: string, keyPrefix: string): ReactNode[] {
     if (match.index > lastIndex) {
       nodes.push(text.slice(lastIndex, match.index));
     }
-    if (match[1] !== undefined) {
+    if (match[2] !== undefined) {
+      // Inline image: ![alt](url)
+      nodes.push(
+        <img
+          key={`${keyPrefix}-${i++}`}
+          src={match[2]}
+          alt={match[1] || ""}
+          className="inline-block max-h-96 rounded-md my-2 align-middle"
+        />
+      );
+    } else if (match[3] !== undefined) {
       nodes.push(
         <a
           key={`${keyPrefix}-${i++}`}
-          href={match[2]}
+          href={match[4]}
           className="text-accent underline hover:no-underline"
-          target={match[2].startsWith("http") ? "_blank" : undefined}
-          rel={match[2].startsWith("http") ? "noopener noreferrer" : undefined}
+          target={match[4].startsWith("http") ? "_blank" : undefined}
+          rel={match[4].startsWith("http") ? "noopener noreferrer" : undefined}
         >
-          {match[1]}
+          {match[3]}
         </a>
       );
-    } else if (match[3] !== undefined) {
-      nodes.push(<strong key={`${keyPrefix}-${i++}`}>{match[3]}</strong>);
-    } else if (match[4] !== undefined) {
-      nodes.push(<em key={`${keyPrefix}-${i++}`}>{match[4]}</em>);
+    } else if (match[5] !== undefined) {
+      nodes.push(<strong key={`${keyPrefix}-${i++}`}>{match[5]}</strong>);
+    } else if (match[6] !== undefined) {
+      nodes.push(<em key={`${keyPrefix}-${i++}`}>{match[6]}</em>);
     }
     lastIndex = match.index + match[0].length;
   }
@@ -84,6 +96,27 @@ export function renderMarkdown(source: string): ReactNode {
     if (line.trim() === "") {
       flushParagraph();
       flushList();
+      continue;
+    }
+
+    // A line that is ONLY an image gets full-width figure treatment
+    // (as opposed to an image referenced mid-sentence, handled inline).
+    const soloImageMatch = /^!\[([^\]]*)\]\(([^)]+)\)$/.exec(line.trim());
+    if (soloImageMatch) {
+      flushParagraph();
+      flushList();
+      const alt = soloImageMatch[1];
+      const url = soloImageMatch[2];
+      blocks.push(
+        <figure key={`img-${blockIndex++}`} className="my-8">
+          <div className="relative w-full aspect-[16/10] rounded-lg overflow-hidden shadow-md">
+            <Image src={url} alt={alt || "Blog post image"} fill className="object-cover" />
+          </div>
+          {alt && (
+            <figcaption className="text-sm text-center text-muted-foreground mt-2">{alt}</figcaption>
+          )}
+        </figure>
+      );
       continue;
     }
 

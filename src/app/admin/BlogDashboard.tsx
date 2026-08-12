@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { getFirebaseStorage } from "@/firebase/storage";
@@ -33,7 +33,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Pencil, Trash2, Plus, X } from "lucide-react";
+import { Pencil, Trash2, Plus, X, ImagePlus } from "lucide-react";
 
 function slugify(input: string): string {
   return input
@@ -68,8 +68,10 @@ export default function BlogDashboard() {
   const [tagInput, setTagInput] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [insertingContentImage, setInsertingContentImage] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     const unsubscribe = subscribeToAllBlogPosts((data) => {
@@ -145,6 +147,42 @@ export default function BlogDashboard() {
       setFormError("Image upload failed. Please try again.");
     } finally {
       setUploading(false);
+    }
+  }
+
+  async function handleInsertContentImage(file: File) {
+    setInsertingContentImage(true);
+    setFormError(null);
+    try {
+      const ext = file.name.split(".").pop() || "jpg";
+      const slugPart = form.slug || "post";
+      const path = `blog-images/${slugPart}-inline-${Date.now()}.${ext}`;
+      const storageRef = ref(getFirebaseStorage(), path);
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+      const alt = window.prompt("Caption / alt text for this image (optional):", "") ?? "";
+      const markdown = `\n\n![${alt}](${url})\n\n`;
+
+      const textarea = contentTextareaRef.current;
+      if (textarea) {
+        const start = textarea.selectionStart ?? form.content.length;
+        const end = textarea.selectionEnd ?? form.content.length;
+        const newContent = form.content.slice(0, start) + markdown + form.content.slice(end);
+        setForm((f) => ({ ...f, content: newContent }));
+        // Restore focus and cursor position after the inserted markdown.
+        requestAnimationFrame(() => {
+          textarea.focus();
+          const cursorPos = start + markdown.length;
+          textarea.setSelectionRange(cursorPos, cursorPos);
+        });
+      } else {
+        setForm((f) => ({ ...f, content: f.content + markdown }));
+      }
+    } catch (err) {
+      console.error(err);
+      setFormError("Image upload failed. Please try again.");
+    } finally {
+      setInsertingContentImage(false);
     }
   }
 
@@ -320,13 +358,45 @@ export default function BlogDashboard() {
             </div>
 
             <div className="space-y-2">
-              <Label>Content (Markdown — use **bold**, *italic*, # Heading, [link](url))</Label>
+              <div className="flex items-center justify-between">
+                <Label>Content (Markdown — use **bold**, *italic*, # Heading, [link](url))</Label>
+                <label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    disabled={insertingContentImage}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleInsertContentImage(file);
+                      e.target.value = "";
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={insertingContentImage}
+                    asChild
+                  >
+                    <span className="cursor-pointer inline-flex items-center">
+                      <ImagePlus className="mr-2 h-4 w-4" />
+                      {insertingContentImage ? "Uploading…" : "Insert Image"}
+                    </span>
+                  </Button>
+                </label>
+              </div>
               <Textarea
+                ref={contentTextareaRef}
                 rows={12}
                 className="font-mono text-sm"
                 value={form.content}
                 onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))}
               />
+              <p className="text-xs text-muted-foreground">
+                Inserts a photo at your cursor position as ![caption](url) — place it on its own
+                line for a full-width image, or inline within a sentence for a smaller image.
+              </p>
             </div>
 
             <div className="space-y-2">
